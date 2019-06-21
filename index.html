@@ -23,27 +23,98 @@
       /* width: 100%; */
       overflow: hidden;
     }
+    #modal-content img{
+      object-fit: cover;
+      width: 100%;
+    }
   </style>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css"
+  />
+
   <script>
     $.ajax(
       "https://res.cloudinary.com/spiffysparrow/image/list/cardboard.json"
     ).then(({ resources }) => {
-      resources.forEach(img => {
-        $("main").prepend(
-          `<div class="thumb"><img id="${
-            img.public_id
-          }" src="https://res.cloudinary.com/spiffysparrow/image/upload//w_500/${
-            img.public_id
-          }.${img.format}" /></div>`
-        );
+
+      const grouped = resources.reduce((acc, d) => {
+        var arr = d.public_id.split("/");
+        acc[arr[1]] = acc[arr[1]] || [];
+        acc[arr[1]].push(d.public_id + "." + d.format);
+        return acc;
+      }, {});
+
+      Object.keys(grouped).forEach(groupName => {
+        const group = grouped[groupName];
+        $("main").prepend(`
+          <div class="thumb">
+            <a href="#ex1" rel="modal:open">
+                <img class="thumb-img" data-group="${groupName}" id="${
+                  group[0]
+                }" src="https://res.cloudinary.com/spiffysparrow/image/upload//w_500/${
+                group[0]
+              }" />
+            </a>
+          </div>
+        `);
       });
+      $("body").on('click', '.thumb-img', (e) => {
+        var group = e.currentTarget.dataset.group
+        window.group = group
+        window.imageNum = 0
+        var imgStr = grouped[group][0]
+        $('#modal-content').html(`<img class="thumb-img" id="${
+              imgStr
+            }" src="https://res.cloudinary.com/spiffysparrow/image/upload//w_900/${
+            imgStr
+          }" />`)
+          $("#prev").hide()
+          $("#next").show()
+      })
+
+      window.imageNum = 0
+
+      $("#prev").click(() => {
+        window.imageNum = window.imageNum - 1
+        var imgStr = grouped[window.group][window.imageNum]
+        $('#modal-content').html(`<img class="thumb-img" id="${
+              imgStr
+            }" src="https://res.cloudinary.com/spiffysparrow/image/upload//w_900/${
+            imgStr
+          }" />`)
+          $("#next").show()
+      })
+      $("#next").click(() => {
+        window.imageNum = window.imageNum + 1
+        var imgStr = grouped[window.group][window.imageNum]
+        if(grouped[window.group].length -1 === window.imageNum) {
+          $("#next").hide()
+        }
+        $('#modal-content').html(`<img class="thumb-img" id="${
+              imgStr
+            }" src="https://res.cloudinary.com/spiffysparrow/image/upload//w_900/${
+            imgStr
+          }" />`)
+          $("#prev").show()
+      })
     });
+
+
+    // debugger
   </script>
 
   <body>
-    <header><h1>Kakii Keenan</h1></header>
+    <header class="thumb-img"><h1>Kakii Keenan</h1></header>
     <main></main>
-    <footer>contact - kakiikeenan@gmail.com</footer>
+
+    <div id="ex1" class="modal">
+        <a href="#" id="prev" >Prev</a>
+        <a href="#" id="next" >Next</a>
+      <div id="modal-content" />
+    
+    </div>
   </body>
 </html>
