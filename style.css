@@ -46,3 +46,7 @@ footer {
   /* width: 100%; */
   overflow: hidden;
 }
+.thumb img {
+  margin-left: 50%;
+  transform: translateX(-50%);
+}

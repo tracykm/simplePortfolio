@@ -1,3 +1,6 @@
+// renders anything from cloudianry with the tag "cardboard"
+// and the home page is based on the tag "cover"
+
 function renderGroupImages({ grouped, group }) {
   window.group = group;
   $(".thumb-gallery").html("");
@@ -28,46 +31,58 @@ function renderThumbs(grouped) {
   });
 }
 
-$.ajax(
-  "https://res.cloudinary.com/spiffysparrow/image/list/cardboard.json"
-).then(({ resources }) => {
-  const grouped = resources.reduce((acc, d) => {
-    var arr = d.public_id.split("/");
-    acc[arr[1]] = acc[arr[1]] || [];
-    acc[arr[1]].push(d.public_id + "." + d.format);
-    return acc;
-  }, {});
+let covers = {};
 
-  const groupKeys = Object.keys(grouped);
+$.ajax("https://res.cloudinary.com/spiffysparrow/image/list/cover.json").then(
+  ({ resources }) => {
+    covers = resources.reduce((acc, d) => {
+      var arr = d.public_id.split("/");
+      acc[arr[1]] = acc[arr[1]] || [];
+      acc[arr[1]].push(d.public_id + "." + d.format);
+      return acc;
+    }, {});
+    renderThumbs(covers);
 
-  renderThumbs(grouped);
+    $.ajax(
+      "https://res.cloudinary.com/spiffysparrow/image/list/cardboard.json"
+    ).then(({ resources }) => {
+      const grouped = resources.reduce((acc, d) => {
+        var arr = d.public_id.split("/");
+        acc[arr[1]] = acc[arr[1]] || [];
+        acc[arr[1]].push(d.public_id + "." + d.format);
+        return acc;
+      }, {});
 
-  $("body").on("click", ".thumb-img", e => {
-    var group = e.currentTarget.dataset.group;
-    renderGroupImages({ grouped, group });
-  });
+      const groupKeys = Object.keys(grouped);
 
-  $(".home-btn").click(() => {
-    renderThumbs(grouped);
-  });
-  $(".prev-btn").click(() => {
-    var i = groupKeys.indexOf(window.group);
-    i--;
-    if (i < 0) {
-      i = groupKeys.length - 1;
-    }
-    var newGroup = groupKeys[i];
+      $("body").on("click", ".thumb-img", e => {
+        var group = e.currentTarget.dataset.group;
+        renderGroupImages({ grouped, group });
+      });
 
-    renderGroupImages({ grouped, group: newGroup });
-  });
-  $(".next-btn").click(() => {
-    var i = groupKeys.indexOf(window.group);
-    i++;
-    if (i > groupKeys.length - 1) {
-      i = 0;
-    }
-    var newGroup = groupKeys[i];
+      $(".home-btn").click(() => {
+        renderThumbs(covers);
+      });
+      $(".prev-btn").click(() => {
+        var i = groupKeys.indexOf(window.group);
+        i--;
+        if (i < 0) {
+          i = groupKeys.length - 1;
+        }
+        var newGroup = groupKeys[i];
 
-    renderGroupImages({ grouped, group: newGroup });
-  });
-});
+        renderGroupImages({ grouped, group: newGroup });
+      });
+      $(".next-btn").click(() => {
+        var i = groupKeys.indexOf(window.group);
+        i++;
+        if (i > groupKeys.length - 1) {
+          i = 0;
+        }
+        var newGroup = groupKeys[i];
+
+        renderGroupImages({ grouped, group: newGroup });
+      });
+    });
+  }
+);
