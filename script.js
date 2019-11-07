@@ -1,4 +1,4 @@
-// renders anything from cloudianry with the tag "cardboard"
+// renders anything from cloudinary with the tag "cardboard"
 // and the home page is based on the tag "cover"
 
 function renderGroupImages({ grouped, group }) {
@@ -14,6 +14,7 @@ function renderGroupImages({ grouped, group }) {
 }
 
 function renderThumbs(grouped) {
+  $(".thumb-gallery").html("");
   $(".full-images").html("");
   Object.keys(grouped).forEach(groupName => {
     const group = grouped[groupName];
