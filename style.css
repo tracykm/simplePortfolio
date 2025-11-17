@@ -25,6 +25,9 @@ h1 {
   grid-auto-rows: 300px;
   margin: auto;
 }
+main {
+  background: white;
+}
 header {
   position: sticky;
   top: 0;
@@ -92,4 +95,13 @@ footer a {
 .filter-btn.active {
   background: #333;
   color: white;
+}
+
+@media (max-width: 800px) {
+  h1 {
+    font-size: 32px;
+  }
+  .back-btn {
+    top: 1.25rem;
+  }
 }

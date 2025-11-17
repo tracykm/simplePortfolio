@@ -12,6 +12,7 @@ let allGrouped = {};
 let allCovers = {};
 let groupKeys = [];
 let currentFilter = "all";
+let groupMetadata = {}; // Store creation dates for sorting
 
 const filters = {
   bugs: [],
@@ -106,9 +107,20 @@ function renderThumbs(grouped) {
   // Apply current filter
   const filteredGroups = filterGroups(grouped, currentFilter);
 
-  Object.keys(filteredGroups).forEach((groupName) => {
+  // Sort groups by most recent creation date
+  const sortedGroupNames = Object.keys(filteredGroups).sort((a, b) => {
+    const dateA = groupMetadata[a]
+      ? new Date(groupMetadata[a].created_at)
+      : new Date(0);
+    const dateB = groupMetadata[b]
+      ? new Date(groupMetadata[b].created_at)
+      : new Date(0);
+    return dateB - dateA; // Most recent first
+  });
+
+  sortedGroupNames.forEach((groupName) => {
     const group = filteredGroups[groupName];
-    $(".thumb-gallery").prepend(`
+    $(".thumb-gallery").append(`
           <div class="thumb">
             <a href="#${groupName}">
                 <img class="thumb-img" data-group="${groupName}" id="${group[0]}" src="${CLOUDINARY_URL}/upload//w_500/${group[0]}" />
@@ -186,11 +198,23 @@ window.addEventListener("popstate", function (event) {
 $.ajax(`${CLOUDINARY_URL}/list/${COVER_TAG}.json`).then(({ resources }) => {
   allCovers = resources.reduce((acc, d) => {
     var arr = d.public_id.split("/");
-    acc[arr[1]] = acc[arr[1]] || [];
-    acc[arr[1]].push(d.public_id + "." + d.format);
+    const groupName = arr[1];
+    acc[groupName] = acc[groupName] || [];
+    acc[groupName].push(d.public_id + "." + d.format);
+
+    // Store metadata for sorting (use the most recent image in each group)
+    if (
+      !groupMetadata[groupName] ||
+      (d.created_at && d.created_at > groupMetadata[groupName].created_at)
+    ) {
+      groupMetadata[groupName] = {
+        created_at: d.created_at || new Date().toISOString(),
+        public_id: d.public_id,
+      };
+    }
+
     return acc;
   }, {});
-
   $.ajax(`${CLOUDINARY_URL}/list/${SHOWN_TAG}.json`).then(({ resources }) => {
     allGrouped = resources.reduce((acc, d) => {
       var arr = d.public_id.split("/");
