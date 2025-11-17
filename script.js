@@ -27,9 +27,16 @@ function renderGroupImages({ grouped, group }) {
   // Update URL with deep link
   updateURL(group);
 
-  // Push state for back button functionality (only if not initial load)
+  // Manage history state for back button functionality
   if (!window.initialLoad) {
     history.pushState(
+      { view: "detail", group: group },
+      `Portfolio - ${group}`,
+      `#${group}`
+    );
+  } else {
+    // Replace state on initial load to avoid duplicate entries
+    history.replaceState(
       { view: "detail", group: group },
       `Portfolio - ${group}`,
       `#${group}`
@@ -55,28 +62,37 @@ function renderThumbs(grouped) {
 
   // Clear URL and update history for home view
   updateURL("");
-  history.pushState(
-    { view: "home" },
-    "Portfolio - Home",
-    window.location.pathname
-  );
+  if (!window.initialLoad) {
+    history.pushState(
+      { view: "home" },
+      "Portfolio - Home",
+      window.location.pathname
+    );
+  } else {
+    // Replace state on initial load to avoid duplicate entries
+    history.replaceState(
+      { view: "home" },
+      "Portfolio - Home",
+      window.location.pathname
+    );
+  }
+  window.initialLoad = false;
 }
 
 function updateURL(group) {
   if (group) {
     window.location.hash = group;
   } else {
-    // Clear hash
-    history.replaceState(
-      null,
-      null,
-      window.location.pathname + window.location.search
-    );
+    // Clear hash without affecting history
+    if (window.location.hash) {
+      window.location.hash = '';
+    }
   }
 }
 
 function handleDeepLink() {
   const hash = window.location.hash.replace("#", "");
+  window.initialLoad = true;
   if (hash && allGrouped[hash]) {
     renderGroupImages({ grouped: allGrouped, group: hash });
   } else {
@@ -92,6 +108,7 @@ function navigateToGroup(group) {
 
 // Handle browser back/forward buttons
 window.addEventListener("popstate", function (event) {
+  window.initialLoad = true;
   if (event.state) {
     if (event.state.view === "home") {
       renderThumbs(allCovers);
@@ -99,8 +116,13 @@ window.addEventListener("popstate", function (event) {
       renderGroupImages({ grouped: allGrouped, group: event.state.group });
     }
   } else {
-    // Handle direct URL access or refresh
-    handleDeepLink();
+    // Handle direct URL access or when going back to initial state
+    const hash = window.location.hash.replace("#", "");
+    if (hash && allGrouped[hash]) {
+      renderGroupImages({ grouped: allGrouped, group: hash });
+    } else {
+      renderThumbs(allCovers);
+    }
   }
 });
 
