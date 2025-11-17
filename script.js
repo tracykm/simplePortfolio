@@ -11,10 +11,18 @@ const CLOUDINARY_URL = `https://res.cloudinary.com/${CLOUDINARY_USERNAME}/image`
 let allGrouped = {};
 let allCovers = {};
 let groupKeys = [];
+let currentFilter = "all";
+
+const filters = {
+  bugs: [],
+  plants: ["plant", "sunflower", "carrot", "onion"],
+  "other animals": ["animal", "sloth", "lizard", "gecko", "owl", "fish"],
+};
 
 function renderGroupImages({ grouped, group }) {
   window.group = group;
   $(".back-btn").show();
+  $(".filter-buttons").hide();
   $(".thumb-gallery").html("");
   $(".full-images").html(
     grouped[group]
@@ -45,12 +53,61 @@ function renderGroupImages({ grouped, group }) {
   window.initialLoad = false;
 }
 
+function filterGroups(grouped, filter) {
+  if (filter === "all") {
+    return grouped;
+  }
+
+  const filtered = {};
+  Object.keys(grouped).forEach((groupName) => {
+    const lowerGroupName = groupName.toLowerCase();
+    let shouldInclude = false;
+
+    // Check if group belongs to the selected filter category
+    if (filter === "plants") {
+      shouldInclude = filters.plants.some((plant) =>
+        lowerGroupName.includes(plant.toLowerCase())
+      );
+      debugger;
+    } else if (filter === "other animals") {
+      shouldInclude = filters["other animals"].some((animal) =>
+        lowerGroupName.includes(animal.toLowerCase())
+      );
+    } else if (filter === "bugs") {
+      // For bugs filter, include groups that don't match plants or other animals (fallback)
+      const isPlant = filters.plants.some((plant) =>
+        lowerGroupName.includes(plant.toLowerCase())
+      );
+      const isOtherAnimal = filters["other animals"].some((animal) =>
+        lowerGroupName.includes(animal.toLowerCase())
+      );
+      shouldInclude = !isPlant && !isOtherAnimal; // Fallback: if not plant or other animal, then it's bugs
+    }
+
+    if (shouldInclude) {
+      filtered[groupName] = grouped[groupName];
+    }
+  });
+
+  console.log(
+    `Filter "${filter}" resulted in ${Object.keys(filtered).length} groups:`,
+    Object.keys(filtered)
+  );
+
+  return filtered;
+}
+
 function renderThumbs(grouped) {
   $(".back-btn").hide();
+  $(".filter-buttons").show();
   $(".thumb-gallery").html("");
   $(".full-images").html("");
-  Object.keys(grouped).forEach((groupName) => {
-    const group = grouped[groupName];
+
+  // Apply current filter
+  const filteredGroups = filterGroups(grouped, currentFilter);
+
+  Object.keys(filteredGroups).forEach((groupName) => {
+    const group = filteredGroups[groupName];
     $(".thumb-gallery").prepend(`
           <div class="thumb">
             <a href="#${groupName}">
@@ -85,7 +142,7 @@ function updateURL(group) {
   } else {
     // Clear hash without affecting history
     if (window.location.hash) {
-      window.location.hash = '';
+      window.location.hash = "";
     }
   }
 }
@@ -156,8 +213,24 @@ $.ajax(`${CLOUDINARY_URL}/list/${COVER_TAG}.json`).then(({ resources }) => {
       renderThumbs(allCovers);
     });
 
+    $("body").on("click", ".filter-btn", (e) => {
+      e.preventDefault();
+      const filter = e.currentTarget.dataset.filter;
+      currentFilter = filter;
+
+      // Update active button
+      $(".filter-btn").removeClass("active");
+      $(e.currentTarget).addClass("active");
+
+      // Re-render thumbnails with new filter
+      renderThumbs(allCovers);
+    });
+
     $(".home-btn").click((e) => {
       e.preventDefault();
+      currentFilter = "all";
+      $(".filter-btn").removeClass("active");
+      $(".filter-btn[data-filter='all']").addClass("active");
       renderThumbs(allCovers);
     });
 

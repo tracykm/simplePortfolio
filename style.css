@@ -64,3 +64,32 @@ footer a {
   color: black;
   padding-top: .5rem;
 }
+
+.filter-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0 2rem 0;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid #333;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: #f0f0f0;
+}
+
+.filter-btn.active {
+  background: #333;
+  color: white;
+}
